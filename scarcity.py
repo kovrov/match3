@@ -6,6 +6,10 @@ from pygame.locals import *
 
 
 
+ROWS = [range(i * 8,  i * 8 + 8) for i in range(8)]
+COLUMNS = [range(i, 64, 8) for i in range(8)]
+
+
 # This class is the main subject of prototyping game logic.
 class Board():
 	initial_set = operator.repeat(range(7), 9)+[0]
@@ -52,10 +56,10 @@ class Board():
 	def get_matched_stones(self, stones, log=False):
 		res, tmp = [], []
 		last_type = None
-		for row in [range(i*8, i*8+8) for i in range(8)] + [range(i, 64, 8) for i in range(8)]:
-			if log: print row
+		for line in ROWS + COLUMNS:
+			if log: print line
 			# I still don't like this..
-			for n in row:
+			for n in line:
 				if stones[n] is None or stones[n].deleted:
 					if len(tmp) > 2: res += tmp
 					last_type = None
@@ -80,6 +84,17 @@ class Board():
 		for i in self.get_matched_stones(self.stones):
 			if self.stones[i] is not None:
 				self.stones[i].deleted = True
+		# if there are empty cells, shift stones from upper cells
+		for line in COLUMNS:
+			empty_cells = []
+			for n in reversed(line):
+				stone = self.stones[n]
+				if stone is None:
+					empty_cells.insert(0, n)
+				elif empty_cells:
+					stone.pos = empty_cells.pop()
+					self.stones[n] = None
+					self.stones[stone.pos] = stone
 
 	def free_cell(self, pos):
 		self.stones[pos] = None
@@ -90,18 +105,18 @@ class Board():
 
 
 
-STONE_SIZE = 64
-CELL_SIZE = 76
+STONE_SIZE = 48
+CELL_SIZE = 64
 SCREEN_WIDTH = CELL_SIZE * 8 + (CELL_SIZE - STONE_SIZE)
 SCREEN_HEIGHT = SCREEN_WIDTH
 COLORS = (
 	(255, 102, 102), # red
-	(102, 230, 102), # green
+	( 80, 224,  96), # green
 	(102, 102, 230), # blue
 	(255, 230, 102), # yellow
 	(204, 102, 255), # purple
-	(102, 230, 230), # aqua
-	(180, 180, 180)) # gray
+	(102, 232, 232), # aqua
+	(160, 160, 160)) # gray
 BG = (24,24,48)
 
 mouse_click = None
