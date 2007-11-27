@@ -11,7 +11,7 @@ COLUMNS = [range(i, 64, 8) for i in range(8)]
 
 
 # This class is the main subject of prototyping game logic.
-class Board():
+class Board(object):
 	initial_set = operator.repeat(range(7), 9)+[0]
 	def __init__(self):
 		self.stones = []
@@ -86,15 +86,16 @@ class Board():
 				self.stones[i].deleted = True
 		# if there are empty cells, shift stones from upper cells
 		for line in COLUMNS:
-			empty_cells = []
+			empty_cells = []  # queue
 			for n in reversed(line):
 				stone = self.stones[n]
 				if stone is None:
-					empty_cells.insert(0, n)
+					empty_cells.append(n)
 				elif empty_cells:
-					stone.pos = empty_cells.pop()
+					stone.pos = empty_cells.pop(0)
 					self.stones[n] = None
 					self.stones[stone.pos] = stone
+					empty_cells.append(n)
 
 	def free_cell(self, pos):
 		self.stones[pos] = None
@@ -196,6 +197,7 @@ class Stone(pygame.sprite.Sprite):
 def main():
 	global mouse_click # is ommit global, mouse_click would be CoW'ed
 	pygame.init()
+	pygame.display.set_caption('swap stones to match three in a row, "r" to reset')
 	window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 	# setup
