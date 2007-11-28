@@ -57,7 +57,6 @@ class Board(object):
 		res, tmp = [], []
 		last_type = None
 		for line in ROWS + COLUMNS:
-			if log: print line
 			# I still don't like this..
 			for n in line:
 				if stones[n] is None or stones[n].deleted:
@@ -66,18 +65,14 @@ class Board(object):
 					tmp = []
 				else:
 					if last_type is stones[n].type or last_type is None:
-						if log: print "tmp.append", n
 						tmp.append(n)
 					else:
-						if log: print "tmp = []"
 						if len(tmp) > 2: res += tmp
 						tmp = [n]
 					last_type = stones[n].type
 			if len(tmp) > 2: res += tmp
 			tmp = []
-			if log: print "last_type = None"
 			last_type = None
-		if log and res: print res
 		return res
 
 	def update(self):
@@ -96,6 +91,8 @@ class Board(object):
 					self.stones[n] = None
 					self.stones[stone.pos] = stone
 					empty_cells.append(n)
+			for n in empty_cells:
+				self.stones[n] = Stone(self, random.randint(0,6), n)
 
 	def free_cell(self, pos):
 		self.stones[pos] = None
@@ -126,26 +123,30 @@ mouse_click = None
 class Stone(pygame.sprite.Sprite):
 	def __init__(self, board, type, pos):
 		pygame.sprite.Sprite.__init__(self, self.containers)
+		self.surface = pygame.Surface((STONE_SIZE, STONE_SIZE))
+		self.surface.fill(COLORS[type])
+		# upper-left corner
+		pygame.draw.rect(self.surface, BG, (0, 0, 2, 2))
+		pygame.draw.rect(self.surface, BG, (0, 0, 1, 4))
+		pygame.draw.rect(self.surface, BG, (0, -1, 4, 2)) # bug?
+		# upper-right corner
+		pygame.draw.rect(self.surface, BG, (STONE_SIZE-2, 0, 2, 2))
+		pygame.draw.rect(self.surface, BG, (STONE_SIZE-1, 0, 1, 4))
+		pygame.draw.rect(self.surface, BG, (STONE_SIZE-4, -1, 4, 2)) # bug!
+		# lower-right corner
+		pygame.draw.rect(self.surface, BG, (STONE_SIZE-2, STONE_SIZE-2, 2, 2))
+		pygame.draw.rect(self.surface, BG, (STONE_SIZE-1, STONE_SIZE-4, 1, 4))
+		pygame.draw.rect(self.surface, BG, (STONE_SIZE-4, STONE_SIZE-1, 4, 2)) # bug
+		# lower-left corner
+		pygame.draw.rect(self.surface, BG, (0, STONE_SIZE-2, 2, 2))
+		pygame.draw.rect(self.surface, BG, (0, STONE_SIZE-4, 1, 4))
+		pygame.draw.rect(self.surface, BG, (0, STONE_SIZE-1, 4, 2)) # bug..
+		# pygame.sprite.Group interface
+		self.image = self.surface.copy()
+		self.rect = self.surface.get_rect()
+		# game-specific
 		self.board = board
 		self.type = type
-		self.image = pygame.Surface((STONE_SIZE, STONE_SIZE))
-		self.rect = self.image.fill(COLORS[self.type])
-		# upper-left corner
-		pygame.draw.rect(self.image, BG, (0, 0, 2, 2))
-		pygame.draw.rect(self.image, BG, (0, 0, 1, 4))
-		pygame.draw.rect(self.image, BG, (0, -1, 4, 2)) # bug?
-		# upper-right corner
-		pygame.draw.rect(self.image, BG, (STONE_SIZE-2, 0, 2, 2))
-		pygame.draw.rect(self.image, BG, (STONE_SIZE-1, 0, 1, 4))
-		pygame.draw.rect(self.image, BG, (STONE_SIZE-4, -1, 4, 2)) # bug!
-		# lower-right corner
-		pygame.draw.rect(self.image, BG, (STONE_SIZE-2, STONE_SIZE-2, 2, 2))
-		pygame.draw.rect(self.image, BG, (STONE_SIZE-1, STONE_SIZE-4, 1, 4))
-		pygame.draw.rect(self.image, BG, (STONE_SIZE-4, STONE_SIZE-1, 4, 2)) # bug
-		# lower-left corner
-		pygame.draw.rect(self.image, BG, (0, STONE_SIZE-2, 2, 2))
-		pygame.draw.rect(self.image, BG, (0, STONE_SIZE-4, 1, 4))
-		pygame.draw.rect(self.image, BG, (0, STONE_SIZE-1, 4, 2)) # bug..
 		self.pos = pos
 		self.selected = False
 		self.deleted = False
@@ -173,8 +174,6 @@ class Stone(pygame.sprite.Sprite):
 				self.image.set_alpha(0)
 			else:
 				self.image.set_alpha(255)
-		#self.rect.left += random.randint(-1, 1)
-		#self.rect.bottom += random.randint(-1, 1)
 
 	def __setattr__(self, name, value):
 		if (name == "selected"):
@@ -202,7 +201,7 @@ def main():
 
 	# setup
 	all = pygame.sprite.Group()
-	stones = pygame.sprite.RenderPlain()
+	stones = pygame.sprite.Group()
 	Stone.containers = stones, all
 	board = Board()
 
