@@ -174,6 +174,19 @@ class Stone(pygame.sprite.Sprite):
 				self.image.set_alpha(0)
 			else:
 				self.image.set_alpha(255)
+		# horisontal
+		#if (self.real_pos[0] < self.target_pos[0]):
+		#	self.real_pos[0] = self.target_pos[0]
+		#	self.rect.left = self.real_pos[0]
+		#if (self.real_pos[0] > self.target_pos[0]):
+		#	pass
+		# vertical
+		#if self.real_pos[1] < self.target_pos[1]:
+		#	self.real_pos[1] += 2
+		#	self.rect.bottom = self.real_pos[1]
+		#if self.real_pos[1] > self.target_pos[1]:
+		#	self.real_pos[1] = self.target_pos[1]
+		#	self.rect.bottom = self.real_pos[1]
 
 	def __setattr__(self, name, value):
 		if (name == "selected"):
@@ -184,8 +197,12 @@ class Stone(pygame.sprite.Sprite):
 		elif (name == "pos"):
 			row = value % 8
 			col = value / 8
-			self.rect.left   = row * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
-			self.rect.bottom = col * CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4
+			x = row * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
+			y = col * CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4
+		#	self.real_pos = [x, self.rect.bottom]
+		#	self.target_pos = [x, y]
+			self.rect.left = x #self.real_pos[0]
+			self.rect.bottom = y #self.real_pos[1]
 		elif (name == "deleted"):
 			if value:
 				self.destruct_timer = 30
