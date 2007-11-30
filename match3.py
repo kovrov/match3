@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import operator, random
+import operator, random, math
 import pygame
 from pygame.locals import *
 
@@ -12,7 +12,7 @@ COLUMNS = [range(i, 64, 8) for i in range(8)]
 
 # This class is the main subject of prototyping game logic.
 class Board(object):
-	initial_set = operator.repeat(range(7), 9)+[0]
+	initial_set = operator.repeat(range(7), 9) + [0]
 	def __init__(self):
 		self.stones = []
 		self.reset()
@@ -24,19 +24,20 @@ class Board(object):
 			for s in self.stones:
 				if s is not None: s.kill()
 			random.shuffle(self.initial_set)
-			self.stones = [Stone(self, self.initial_set[i], i) for i in range(64)]
+			stones_tmp = [Stone(self, self.initial_set[i], i) for i in reversed(range(64))]
+			self.stones = list(reversed(stones_tmp))
 		self.selected = None
 	
-	def select(self, pos):
-		if self.stones[pos] is None or self.stones[pos].deleted:
+	def select(self, cell):
+		if self.stones[cell] is None or self.stones[cell].deleted:
 			return
 		if self.selected is None:
-			self.selected = pos
-			self.stones[pos].selected = True
+			self.selected = cell
+			self.stones[cell].selected = True
 			return
 		# just for readability
 		first = self.selected
-		second = pos
+		second = cell
 		# cleanup before return
 		self.selected = None
 		self.stones[first].selected = False
@@ -50,8 +51,8 @@ class Board(object):
 			return
 		# swap
 		self.stones[first], self.stones[second] = self.stones[second], self.stones[first]
-		self.stones[first].pos = first
-		self.stones[second].pos = second
+		self.stones[first].cell = first
+		self.stones[second].cell = second
 
 	def get_matched_stones(self, stones, log=False):
 		res, tmp = [], []
@@ -87,15 +88,28 @@ class Board(object):
 				if stone is None:
 					empty_cells.append(n)
 				elif empty_cells:
-					stone.pos = empty_cells.pop(0)
+					stone.cell = empty_cells.pop(0)
 					self.stones[n] = None
-					self.stones[stone.pos] = stone
+					self.stones[stone.cell] = stone
 					empty_cells.append(n)
 			for n in empty_cells:
 				self.stones[n] = Stone(self, random.randint(0,6), n)
 
-	def free_cell(self, pos):
-		self.stones[pos] = None
+	def release_cell(self, cell):
+		self.stones[cell] = None
+
+	def get_cell_pos(self, cell):
+		col = cell % 8
+		row = cell / 8
+		x = col * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
+		y = row * CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4
+		return (x, y)
+
+	def get_entry_pos(self, cell):
+		col = cell % 8
+		x = col * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
+		y = 0 - (CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4)
+		return (x, y)
 
 
 
@@ -115,14 +129,28 @@ COLORS = (
 	(204, 102, 255), # purple
 	(102, 232, 232), # aqua
 	(160, 160, 160)) # gray
-BG = (24,24,48)
+BG = (24, 24, 48)
+SPEED = 16
 
 mouse_click = None
 
+
+
+# move this to own module
+def unit_vector(src, dst, unit=1):
+	"""returns "normalized vector" directed from src to dst"""
+	x, y = dst[0] - src[0], dst[1] - src[1]
+	#vlen = math.sqrt(x**2 + y**2)
+	ang = math.atan2(y, x)
+	return (math.cos(ang) * unit, math.sin(ang) * unit)
+
+
 # Stone is responsible for self representation, receiving input, and resources management.
 class Stone(pygame.sprite.Sprite):
-	def __init__(self, board, type, pos):
+	queues = [[] for i in range(8)]
+	def __init__(self, board, type, cell):
 		pygame.sprite.Sprite.__init__(self, self.containers)
+		# create bitmap
 		self.surface = pygame.Surface((STONE_SIZE, STONE_SIZE))
 		self.surface.fill(COLORS[type])
 		# upper-left corner
@@ -147,7 +175,8 @@ class Stone(pygame.sprite.Sprite):
 		# game-specific
 		self.board = board
 		self.type = type
-		self.pos = pos
+		self.cell = cell
+		# internal state
 		self.selected = False
 		self.deleted = False
 		self.blink = False
@@ -155,16 +184,19 @@ class Stone(pygame.sprite.Sprite):
 		self.destruct_timer = 0
 
 	def update(self):
-		global mouse_click # is ommit global, mouse_click would be CoW'ed
+		global mouse_click  # if ommit global, mouse_click would be CoW'ed
+		# state
 		if self.destruct_timer:
 			self.destruct_timer -= 1
 			if self.destruct_timer == 0:
-				self.board.free_cell(self.pos)
+				self.board.release_cell(self.cell)
 				self.kill()
 				return
+		# presentation
 		if not self.selected and mouse_click:
 			if self.rect.collidepoint(mouse_click):
-				self.board.select(self.pos)
+				self.board.select(self.cell)
+				print "self.board.select(%d)" % self.cell
 				mouse_click = None
 		if self.blink:
 			self.blink_cnt -= 1
@@ -173,47 +205,58 @@ class Stone(pygame.sprite.Sprite):
 			if self.blink_cnt < 0:
 				self.image.set_alpha(0)
 			else:
-				self.image.set_alpha(255)
-		# horisontal
-		#if (self.real_pos[0] < self.target_pos[0]):
-		#	self.real_pos[0] = self.target_pos[0]
-		#	self.rect.left = self.real_pos[0]
-		#if (self.real_pos[0] > self.target_pos[0]):
-		#	pass
-		# vertical
-		#if self.real_pos[1] < self.target_pos[1]:
-		#	self.real_pos[1] += 2
-		#	self.rect.bottom = self.real_pos[1]
-		#if self.real_pos[1] > self.target_pos[1]:
-		#	self.real_pos[1] = self.target_pos[1]
-		#	self.rect.bottom = self.real_pos[1]
+				self.image.set_alpha(0xFF)
+		# movement
+		if not self.queue or self.queue and self.queue[0] is self:
+			if self.move_vect != (0,0):
+				if self.pos == self.target_pos:
+					self.move_vect = (0,0)
+				else:
+					vx, vy = self.move_vect[0] * SPEED, self.move_vect[1] * SPEED
+					self.pos[0] += vx
+					self.pos[1] += vy
+					if (vx > 0 and self.pos[0] > self.target_pos[0]) or (vx < 0 and self.pos[0] < self.target_pos[0]):
+						self.pos[0] = self.target_pos[0]
+						self.move_vect[0] = 0
+					if (vy > 0 and self.pos[1] > self.target_pos[1]) or (vy < 0 and self.pos[1] < self.target_pos[1]):
+						self.pos[1] = self.target_pos[1]
+						self.move_vect[1] = 0
+			if self.queue and self.pos[1] > -STONE_SIZE : # temp HACK!!!
+				self.queue.pop(0)
+				self.queue = None
+		self.rect.left, self.rect.bottom = self.pos
 
 	def __setattr__(self, name, value):
 		if (name == "selected"):
 			if (value):
-				self.image.set_alpha(128)
+				self.image.set_alpha(0x7F)
 			else:
-				self.image.set_alpha(255)
-		elif (name == "pos"):
-			row = value % 8
-			col = value / 8
-			x = row * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
-			y = col * CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4
-		#	self.real_pos = [x, self.rect.bottom]
-		#	self.target_pos = [x, y]
-			self.rect.left = x #self.real_pos[0]
-			self.rect.bottom = y #self.real_pos[1]
+				self.image.set_alpha(0xFF)
+		elif (name == "cell"):
+			self.target_pos = list(self.board.get_cell_pos(value))
+			if 'pos' not in self.__dict__:  # this is 'new' stone
+				self.__dict__['pos'] = list(self.board.get_entry_pos(value))
+				self.queue = self.queues[value % 8]  # self.queues is static
+				self.queue.append(self)
+			self.move_vect = list(unit_vector(self.pos, self.target_pos))
 		elif (name == "deleted"):
 			if value:
 				self.destruct_timer = 30
 				self.blink = True
 		self.__dict__[name] = value
 
+	def kill(self):
+		if self.queue is not None:
+			self.queue.remove(self)
+			self.queue = None
+		super(Stone, self).kill()
+
+
 
 def main():
-	global mouse_click # is ommit global, mouse_click would be CoW'ed
+	global mouse_click # if ommit global, values would be CoW'ed
 	pygame.init()
-	pygame.display.set_caption('swap stones to match three in a row, "r" to reset')
+	pygame.display.set_caption('swap stones to match three in a line, "r" to reset')
 	window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 	# setup
