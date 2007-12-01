@@ -24,12 +24,11 @@ class Board(object):
 			for s in self.stones:
 				if s is not None: s.kill()
 			random.shuffle(self.initial_set)
-			stones_tmp = [Stone(self, self.initial_set[i], i) for i in reversed(range(64))]
-			self.stones = list(reversed(stones_tmp))
+			self.stones = list(reversed([Stone(self, self.initial_set[i], i) for i in reversed(range(64))]))
 		self.selected = None
 	
 	def select(self, cell):
-		if self.stones[cell] is None or self.stones[cell].deleted:
+		if self.stones[cell] is None or not self.stones[cell].ready():
 			return
 		if self.selected is None:
 			self.selected = cell
@@ -47,20 +46,20 @@ class Board(object):
 		# check if swapping valid
 		tmp = list(self.stones)
 		tmp[first], tmp[second] = tmp[second], tmp[first]
-		if not self.get_matched_stones(tmp, True):
+		if not self.get_matched_stones(tmp):
 			return
 		# swap
 		self.stones[first], self.stones[second] = self.stones[second], self.stones[first]
 		self.stones[first].cell = first
 		self.stones[second].cell = second
 
-	def get_matched_stones(self, stones, log=False):
+	def get_matched_stones(self, stones):
 		res, tmp = [], []
 		last_type = None
 		for line in ROWS + COLUMNS:
 			# I still don't like this..
 			for n in line:
-				if stones[n] is None or stones[n].deleted:
+				if stones[n] is None or not stones[n].ready():
 					if len(tmp) > 2: res += tmp
 					last_type = None
 					tmp = []
@@ -93,7 +92,9 @@ class Board(object):
 					self.stones[stone.cell] = stone
 					empty_cells.append(n)
 			for n in empty_cells:
-				self.stones[n] = Stone(self, random.randint(0,6), n)
+				self.stones[n] = Stone(self, random.randint(0, 6), n)
+		# stones must be updated in particular order
+		map(lambda s: s.update(), reversed(self.stones))
 
 	def release_cell(self, cell):
 		self.stones[cell] = None
@@ -196,7 +197,6 @@ class Stone(pygame.sprite.Sprite):
 		if not self.selected and mouse_click:
 			if self.rect.collidepoint(mouse_click):
 				self.board.select(self.cell)
-				print "self.board.select(%d)" % self.cell
 				mouse_click = None
 		if self.blink:
 			self.blink_cnt -= 1
@@ -251,6 +251,11 @@ class Stone(pygame.sprite.Sprite):
 			self.queue = None
 		super(Stone, self).kill()
 
+	def ready(self):
+		if self.deleted or self.move_vect != (0,0):
+			return False
+		return True
+
 
 
 def main():
@@ -260,9 +265,8 @@ def main():
 	window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 	# setup
-	all = pygame.sprite.Group()
 	stones = pygame.sprite.Group()
-	Stone.containers = stones, all
+	Stone.containers = stones
 	board = Board()
 
 	screen = pygame.display.get_surface()
@@ -277,7 +281,6 @@ def main():
 			if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
 				return
 		board.update()
-		all.update()
 		screen.fill(BG)
 		stones.draw(screen)
 		pygame.display.flip()
