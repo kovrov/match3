@@ -8,6 +8,8 @@ from pygame.locals import *
 
 ROWS = [range(i * 8,  i * 8 + 8) for i in range(8)]
 COLUMNS = [range(i, 64, 8) for i in range(8)]
+STONE_SIZE = 48
+CELL_SIZE = 64
 
 
 # This class is the main subject of prototyping game logic.
@@ -24,7 +26,7 @@ class Board(object):
 			for s in self.stones:
 				if s is not None: s.kill()
 			random.shuffle(self.initial_set)
-			self.stones = list(reversed([Stone(self, self.initial_set[i], i) for i in reversed(range(64))]))
+			self.stones = [Stone(self, self.initial_set[i], i) for i in range(64)]
 		self.selected = None
 	
 	def select(self, cell):
@@ -82,7 +84,7 @@ class Board(object):
 		# if there are empty cells, shift stones from upper cells
 		for line in COLUMNS:
 			empty_cells = []  # queue
-			for n in reversed(line):
+			for n in line:
 				stone = self.stones[n]
 				if stone is None:
 					empty_cells.append(n)
@@ -94,7 +96,7 @@ class Board(object):
 			for n in empty_cells:
 				self.stones[n] = Stone(self, random.randint(0, 6), n)
 		# stones must be updated in particular order
-		map(lambda s: s.update(), reversed(self.stones))
+		map(lambda s: s.update(), self.stones)
 
 	def release_cell(self, cell):
 		self.stones[cell] = None
@@ -103,7 +105,7 @@ class Board(object):
 		col = cell % 8
 		row = cell / 8
 		x = col * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
-		y = row * CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4
+		y = CELL_SIZE * 8 - row * CELL_SIZE  # y is inverted in pygame
 		return (x, y)
 
 	def get_entry_pos(self, cell):
@@ -118,8 +120,6 @@ class Board(object):
 
 
 
-STONE_SIZE = 48
-CELL_SIZE = 64
 SCREEN_WIDTH = CELL_SIZE * 8 + (CELL_SIZE - STONE_SIZE)
 SCREEN_HEIGHT = SCREEN_WIDTH
 COLORS = (
@@ -197,6 +197,7 @@ class Stone(pygame.sprite.Sprite):
 		if not self.selected and mouse_click:
 			if self.rect.collidepoint(mouse_click):
 				self.board.select(self.cell)
+				print "mouse_click", self.cell
 				mouse_click = None
 		if self.blink:
 			self.blink_cnt -= 1
