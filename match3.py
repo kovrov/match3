@@ -6,8 +6,8 @@ from pygame.locals import *
 
 
 
-ROWS = [range(i * 8,  i * 8 + 8) for i in range(8)]
-COLUMNS = [range(i, 64, 8) for i in range(8)]
+ROWS = tuple([tuple(range(i * 8,  i * 8 + 8)) for i in range(8)])
+COLUMNS = tuple([tuple(range(i, 64, 8)) for i in range(8)])
 STONE_SIZE = 48
 CELL_SIZE = 64
 
@@ -20,13 +20,12 @@ class Board(object):
 		self.reset()
 
 	def reset(self):
-		first_time = True
-		while first_time or self.get_matched_stones(self.stones):
-			first_time = False
-			for s in self.stones:
-				if s is not None: s.kill()
+		stone_types = None
+		while not stone_types or self.get_matched_stones(stone_types):
 			random.shuffle(self.initial_set)
-			self.stones = [Stone(self, self.initial_set[i], i) for i in range(64)]
+			stone_types = [self.initial_set[i] for i in range(64)]
+		map(lambda s: s and s.kill(), self.stones)
+		self.stones = [Stone(self, self.initial_set[i], i) for i in range(64)]
 		self.selected = None
 	
 	def select(self, cell):
@@ -59,19 +58,24 @@ class Board(object):
 		res, tmp = [], []
 		last_type = None
 		for line in ROWS + COLUMNS:
-			# I still don't like this..
 			for n in line:
-				if stones[n] is None or not stones[n].ready():
+				# It is getting worse - stones[n] could be either int or object or null
+				stone = stones[n]
+				if stone is None or isinstance(stone, Stone) and not stone.ready():  # type is None
 					if len(tmp) > 2: res += tmp
 					last_type = None
 					tmp = []
 				else:
-					if last_type is stones[n].type or last_type is None:
+					if isinstance(stone, Stone):
+						t = stone.type
+					else:
+						t = stone
+					if last_type is t or last_type is None:
 						tmp.append(n)
 					else:
 						if len(tmp) > 2: res += tmp
 						tmp = [n]
-					last_type = stones[n].type
+					last_type = t
 			if len(tmp) > 2: res += tmp
 			tmp = []
 			last_type = None
@@ -89,14 +93,16 @@ class Board(object):
 				if stone is None:
 					empty_cells.append(n)
 				elif empty_cells:
-					stone.cell = empty_cells.pop(0)
-					self.stones[n] = None
-					self.stones[stone.cell] = stone
-					empty_cells.append(n)
+					cell = empty_cells.pop(0)
+					if stone.ready():
+						stone.cell = cell
+						self.stones[n] = None
+						self.stones[stone.cell] = stone
+						empty_cells.append(n)
 			for n in empty_cells:
 				self.stones[n] = Stone(self, random.randint(0, 6), n)
 		# stones must be updated in particular order
-		map(lambda s: s.update(), self.stones)
+		map(lambda s: s and s.update(), self.stones)
 
 	def release_cell(self, cell):
 		self.stones[cell] = None
@@ -197,7 +203,6 @@ class Stone(pygame.sprite.Sprite):
 		if not self.selected and mouse_click:
 			if self.rect.collidepoint(mouse_click):
 				self.board.select(self.cell)
-				print "mouse_click", self.cell
 				mouse_click = None
 		if self.blink:
 			self.blink_cnt -= 1
