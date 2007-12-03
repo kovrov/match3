@@ -55,9 +55,10 @@ class Board(object):
 		self.stones[second].cell = second
 
 	def get_matched_stones(self, stones):
-		res, tmp = [], []
-		last_type = None
+		res = []
 		for line in ROWS + COLUMNS:
+			tmp = []
+			last_type = None
 			for n in line:
 				# It is getting worse - stones[n] could be either int or object or null
 				stone = stones[n]
@@ -77,8 +78,6 @@ class Board(object):
 						tmp = [n]
 					last_type = t
 			if len(tmp) > 2: res += tmp
-			tmp = []
-			last_type = None
 		return res
 
 	def update(self):
@@ -154,7 +153,7 @@ def unit_vector(src, dst, unit=1):
 
 # Stone is responsible for self representation, receiving input, and resources management.
 class Stone(pygame.sprite.Sprite):
-	queues = [[] for i in range(8)]
+	queues = tuple([[] for i in range(8)])
 	def __init__(self, board, type, cell):
 		pygame.sprite.Sprite.__init__(self, self.containers)
 		# create bitmap
