@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import operator, random, math
+import random, math
 import pygame
 from pygame.locals import *
 
@@ -14,18 +14,16 @@ CELL_SIZE = 64
 
 # This class is the main subject of prototyping game logic.
 class Board(object):
-	initial_set = operator.repeat(range(7), 9) + [0]
 	def __init__(self):
 		self.stones = []
 		self.reset()
 
 	def reset(self):
-		stone_types = None
-		while not stone_types or self.get_matched_stones(stone_types):
-			random.shuffle(self.initial_set)
-			stone_types = [self.initial_set[i] for i in range(64)]
+		stone_set = range(7) * 9 + [0]
+		while not random.shuffle(stone_set) and self.get_matched_stones(stone_set):
+			pass
 		map(lambda s: s and s.kill(), self.stones)
-		self.stones = [Stone(self, self.initial_set[i], i) for i in range(64)]
+		self.stones = [Stone(self, stone_set[i], i) for i in range(64)]
 		self.selected = None
 	
 	def select(self, cell):
