@@ -227,7 +227,7 @@ class Stone(pygame.sprite.Sprite):
 					if (vy > 0 and self.pos[1] > self.target_pos[1]) or (vy < 0 and self.pos[1] < self.target_pos[1]):
 						self.pos[1] = self.target_pos[1]
 						self.move_vect[1] = 0
-			if self.queue and self.pos[1] > CELL_SIZE : # temp HACK!!!
+			if self.queue and self.pos[1] > CELL_SIZE - 1: # temp HACK!!!
 				self.queue.pop(0)
 				self.queue = None
 		self.rect.left, self.rect.bottom = self.pos
