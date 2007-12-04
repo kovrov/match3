@@ -134,8 +134,8 @@ COLORS = (
 	(102, 232, 232), # aqua
 	(160, 160, 160)) # gray
 BG = (24, 24, 48)
-SPEED_MIN = 16.0
-SPEED_MAX = 40.0
+SPEED_MIN = 4.0
+SPEED_MAX = 32.0
 
 mouse_click = None
 
@@ -218,7 +218,7 @@ class Stone(pygame.sprite.Sprite):
 				else:
 					vx, vy = self.move_vect[0] * self.speed, self.move_vect[1] * self.speed
 					if self.speed < SPEED_MAX:
-						self.speed *= 1.1
+						self.speed *= 1.3
 					self.pos[0] += vx
 					self.pos[1] += vy
 					if (vx > 0 and self.pos[0] > self.target_pos[0]) or (vx < 0 and self.pos[0] < self.target_pos[0]):
@@ -240,8 +240,8 @@ class Stone(pygame.sprite.Sprite):
 				self.image.set_alpha(0xFF)
 		elif (name == "cell"):
 			self.target_pos = list(self.board.get_cell_pos(value))
+			self.speed = SPEED_MIN
 			if 'pos' not in self.__dict__:  # this is 'new' stone
-				self.speed = SPEED_MIN
 				self.__dict__['pos'] = list(self.board.get_entry_pos(value))
 				self.queue = self.queues[value % 8]  # self.queues is static
 				self.queue.append(self)
@@ -263,6 +263,12 @@ class Stone(pygame.sprite.Sprite):
 			return False
 		return True
 
+	def __repr__(self):
+		return "<Stone:%d:%d>" % (self.type, self.cell)
+
+	def dump(self):
+		print self.__dict__
+		print
 
 
 def main():
@@ -285,6 +291,8 @@ def main():
 					mouse_click = event.dict['pos']
 			if event.type == KEYDOWN and event.key == K_r:
 				board.reset()
+			if event.type == KEYDOWN and event.key == K_d:
+				map(lambda s: s.dump(), stones)
 			if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
 				return
 		board.update()
