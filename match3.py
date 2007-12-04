@@ -134,7 +134,8 @@ COLORS = (
 	(102, 232, 232), # aqua
 	(160, 160, 160)) # gray
 BG = (24, 24, 48)
-SPEED = 16
+SPEED_MIN = 16.0
+SPEED_MAX = 40.0
 
 mouse_click = None
 
@@ -215,7 +216,9 @@ class Stone(pygame.sprite.Sprite):
 				if self.pos == self.target_pos:
 					self.move_vect = (0,0)
 				else:
-					vx, vy = self.move_vect[0] * SPEED, self.move_vect[1] * SPEED
+					vx, vy = self.move_vect[0] * self.speed, self.move_vect[1] * self.speed
+					if self.speed < SPEED_MAX:
+						self.speed *= 1.1
 					self.pos[0] += vx
 					self.pos[1] += vy
 					if (vx > 0 and self.pos[0] > self.target_pos[0]) or (vx < 0 and self.pos[0] < self.target_pos[0]):
@@ -238,6 +241,7 @@ class Stone(pygame.sprite.Sprite):
 		elif (name == "cell"):
 			self.target_pos = list(self.board.get_cell_pos(value))
 			if 'pos' not in self.__dict__:  # this is 'new' stone
+				self.speed = SPEED_MIN
 				self.__dict__['pos'] = list(self.board.get_entry_pos(value))
 				self.queue = self.queues[value % 8]  # self.queues is static
 				self.queue.append(self)
