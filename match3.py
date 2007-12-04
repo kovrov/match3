@@ -114,7 +114,7 @@ class Board(object):
 	def get_entry_pos(self, cell):
 		col = cell % 8
 		x = col * CELL_SIZE + (CELL_SIZE - STONE_SIZE)
-		y = 0 - (CELL_SIZE + CELL_SIZE - (CELL_SIZE - STONE_SIZE) / 4)
+		y = CELL_SIZE * 8 - 8 * CELL_SIZE
 		return (x, y)
 
 
@@ -224,7 +224,7 @@ class Stone(pygame.sprite.Sprite):
 					if (vy > 0 and self.pos[1] > self.target_pos[1]) or (vy < 0 and self.pos[1] < self.target_pos[1]):
 						self.pos[1] = self.target_pos[1]
 						self.move_vect[1] = 0
-			if self.queue and self.pos[1] > -STONE_SIZE : # temp HACK!!!
+			if self.queue and self.pos[1] > CELL_SIZE : # temp HACK!!!
 				self.queue.pop(0)
 				self.queue = None
 		self.rect.left, self.rect.bottom = self.pos
