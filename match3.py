@@ -212,13 +212,13 @@ class Stone(pygame.sprite.Sprite):
 				self.image.set_alpha(0xFF)
 		# movement
 		if not self.queue or self.queue and self.queue[0] is self:
-			if self.move_vect != (0,0):
-				if self.pos == self.target_pos:
-					self.move_vect = (0,0)
+			if self.move_timer > 0: self.move_timer -= 1
+			if not self.move_timer and self.move_vect != (0, 0):
+				if self.pos == self.target_pos: self.move_vect = (0, 0)
 				else:
+					if self.speed < SPEED_MAX: self.speed *= 1.3
+					if self.speed > SPEED_MAX: self.speed = SPEED_MAX
 					vx, vy = self.move_vect[0] * self.speed, self.move_vect[1] * self.speed
-					if self.speed < SPEED_MAX:
-						self.speed *= 1.3
 					self.pos[0] += vx
 					self.pos[1] += vy
 					if (vx > 0 and self.pos[0] > self.target_pos[0]) or (vx < 0 and self.pos[0] < self.target_pos[0]):
@@ -229,6 +229,8 @@ class Stone(pygame.sprite.Sprite):
 						self.move_vect[1] = 0
 			if self.queue and self.pos[1] > CELL_SIZE - 1: # temp HACK!!!
 				self.queue.pop(0)
+				if len(self.queue) > 0:
+					self.queue[0].speed = self.speed
 				self.queue = None
 		self.rect.left, self.rect.bottom = self.pos
 
@@ -241,7 +243,9 @@ class Stone(pygame.sprite.Sprite):
 		elif (name == "cell"):
 			self.target_pos = list(self.board.get_cell_pos(value))
 			self.speed = SPEED_MIN
+			self.move_timer = random.randint(1, 2)
 			if 'pos' not in self.__dict__:  # this is 'new' stone
+				self.move_timer = random.randint(2, 3)
 				self.__dict__['pos'] = list(self.board.get_entry_pos(value))
 				self.queue = self.queues[value % 8]  # self.queues is static
 				self.queue.append(self)
@@ -263,12 +267,9 @@ class Stone(pygame.sprite.Sprite):
 			return False
 		return True
 
-	def __repr__(self):
-		return "<Stone:%d:%d>" % (self.type, self.cell)
+	def __repr__(self): return "<Stone:%d:%d>" % (self.type, self.cell)
 
-	def dump(self):
-		print self.__dict__
-		print
+	def dump(self): print self.__dict__, "\n"
 
 
 def main():
