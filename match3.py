@@ -125,16 +125,16 @@ class Board(object):
 
 SCREEN_WIDTH = CELL_SIZE * 8 + (CELL_SIZE - STONE_SIZE)
 SCREEN_HEIGHT = SCREEN_WIDTH
-COLORS = (
-	(255, 102, 102), # red
-	( 80, 224,  96), # green
-	(102, 102, 230), # blue
-	(255, 230, 102), # yellow
-	(204, 102, 255), # purple
-	(102, 232, 232), # aqua
-	(160, 160, 160)) # gray
+RECTS = (
+	(0,   0, 48, 48), # red
+	(48,  0, 48, 48), # green
+	(96,  0, 48, 48), # blue
+	(0,  48, 48, 48), # yellow
+	(48, 48, 48, 48), # purple
+	(96, 48, 48, 48), # aqua
+	(0,  96, 48, 48)) # gray
 BG = (24, 24, 48)
-SPEED_MIN = 4.0
+SPEED_MIN = 2.0
 SPEED_MAX = 32.0
 
 mouse_click = None
@@ -153,27 +153,12 @@ def unit_vector(src, dst, unit=1):
 # Stone is responsible for self representation, receiving input, and resources management.
 class Stone(pygame.sprite.Sprite):
 	queues = tuple([[] for i in range(8)])
+	images = pygame.image.load("stones.png")#.convert()
 	def __init__(self, board, type, cell):
 		pygame.sprite.Sprite.__init__(self, self.containers)
 		# create bitmap
-		self.surface = pygame.Surface((STONE_SIZE, STONE_SIZE))
-		self.surface.fill(COLORS[type])
-		# upper-left corner
-		pygame.draw.rect(self.surface, BG, (0, 0, 2, 2))
-		pygame.draw.rect(self.surface, BG, (0, 0, 1, 4))
-		pygame.draw.rect(self.surface, BG, (0, -1, 4, 2)) # bug?
-		# upper-right corner
-		pygame.draw.rect(self.surface, BG, (STONE_SIZE-2, 0, 2, 2))
-		pygame.draw.rect(self.surface, BG, (STONE_SIZE-1, 0, 1, 4))
-		pygame.draw.rect(self.surface, BG, (STONE_SIZE-4, -1, 4, 2)) # bug!
-		# lower-right corner
-		pygame.draw.rect(self.surface, BG, (STONE_SIZE-2, STONE_SIZE-2, 2, 2))
-		pygame.draw.rect(self.surface, BG, (STONE_SIZE-1, STONE_SIZE-4, 1, 4))
-		pygame.draw.rect(self.surface, BG, (STONE_SIZE-4, STONE_SIZE-1, 4, 2)) # bug
-		# lower-left corner
-		pygame.draw.rect(self.surface, BG, (0, STONE_SIZE-2, 2, 2))
-		pygame.draw.rect(self.surface, BG, (0, STONE_SIZE-4, 1, 4))
-		pygame.draw.rect(self.surface, BG, (0, STONE_SIZE-1, 4, 2)) # bug..
+		self.surface = pygame.Surface((STONE_SIZE, STONE_SIZE), SRCALPHA, 32)
+		self.surface.blit(self.images, (0, 0), RECTS[type])
 		# pygame.sprite.Group interface
 		self.image = self.surface.copy()
 		self.rect = self.surface.get_rect()
