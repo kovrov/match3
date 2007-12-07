@@ -192,9 +192,9 @@ class Stone(pygame.sprite.Sprite):
 			if self.blink_cnt < -2:
 				self.blink_cnt = 2
 			if self.blink_cnt < 0:
-				self.image.set_alpha(0)
+				self.image.fill((0,0,0, 0))
 			else:
-				self.image.set_alpha(0xFF)
+				self.image.blit(self.surface, (0,0))
 		# movement
 		if not self.queue or self.queue and self.queue[0] is self:
 			if self.move_timer > 0: self.move_timer -= 1
@@ -222,9 +222,12 @@ class Stone(pygame.sprite.Sprite):
 	def __setattr__(self, name, value):
 		if (name == "selected"):
 			if (value):
-				self.image.set_alpha(0x7F)
+				dark = self.image.copy()
+				dark.fill((0,0,0, 0x7F))
+				self.image.blit(dark, (0,0))
 			else:
-				self.image.set_alpha(0xFF)
+				self.image.fill((0,0,0, 0))
+				self.image.blit(self.surface, (0,0))
 		elif (name == "cell"):
 			self.target_pos = list(self.board.get_cell_pos(value))
 			self.speed = SPEED_MIN
