@@ -4,6 +4,7 @@ import random, math
 import pygame
 from pygame.locals import *
 
+DEBUG = False
 
 
 ROWS = tuple([tuple(range(i * 8,  i * 8 + 8)) for i in range(8)])
@@ -134,6 +135,7 @@ RECTS = (
 	(96, 48, 48, 48), # aqua
 	(0,  96, 48, 48)) # gray
 BG = (24, 24, 48)
+SPEED_ACC = (1.3, 1)[DEBUG] # SPEED_ACC = 1 if DEBUG else 1.3
 SPEED_MIN = 2.0
 SPEED_MAX = 32.0
 
@@ -162,16 +164,16 @@ class Stone(pygame.sprite.Sprite):
 		# pygame.sprite.Group interface
 		self.image = self.surface.copy()
 		self.rect = self.surface.get_rect()
-		# game-specific
-		self.board = board
-		self.type = type
-		self.cell = cell
 		# internal state
 		self.selected = False
 		self.deleted = False
 		self.blink = False
 		self.blink_cnt = 0
 		self.destruct_timer = 0
+		# game-specific
+		self.board = board
+		self.type = type
+		self.cell = cell
 
 	def update(self):
 		global mouse_click  # if ommit global, mouse_click would be CoW'ed
@@ -201,7 +203,7 @@ class Stone(pygame.sprite.Sprite):
 			if not self.move_timer and self.move_vect != (0, 0):
 				if self.pos == self.target_pos: self.move_vect = (0, 0)
 				else:
-					if self.speed < SPEED_MAX: self.speed *= 1.3
+					if self.speed < SPEED_MAX: self.speed *= SPEED_ACC
 					if self.speed > SPEED_MAX: self.speed = SPEED_MAX
 					vx, vy = self.move_vect[0] * self.speed, self.move_vect[1] * self.speed
 					self.pos[0] += vx
@@ -238,6 +240,7 @@ class Stone(pygame.sprite.Sprite):
 				self.queue = self.queues[value % 8]  # self.queues is static
 				self.queue.append(self)
 			self.move_vect = list(unit_vector(self.pos, self.target_pos))
+			self.debug(value)
 		elif (name == "deleted"):
 			if value:
 				self.destruct_timer = 30
@@ -255,16 +258,27 @@ class Stone(pygame.sprite.Sprite):
 			return False
 		return True
 
+	if not DEBUG:
+		def debug(self, *messages): pass
+	else:
+		def debug(self, *messages):
+			i = 0
+			self.image = self.surface.copy()
+			for msg in messages:
+				self.image.blit(font.render(str(msg), 0, (0xFF,0xFF,0xFF)), (0,i))
+				i += 8
+
 	def __repr__(self): return "<Stone:%d:%d>" % (self.type, self.cell)
 
 	def dump(self): print self.__dict__, "\n"
 
 
 def main():
-	global mouse_click # if ommit global, values would be CoW'ed
+	global mouse_click, frame_time, font # if ommit global, values would be CoW'ed
 	pygame.init()
 	pygame.display.set_caption('swap stones to match three in a line, "r" to reset')
 	window = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+	font = pygame.font.Font(pygame.font.match_font("lucidaconsole"), 8)
 
 	# setup
 	stones = pygame.sprite.Group()
@@ -273,6 +287,7 @@ def main():
 
 	screen = pygame.display.get_surface()
 	clock = pygame.time.Clock()
+	paused = False
 	while True:
 		for event in pygame.event.get():
 			if event.type == MOUSEBUTTONDOWN:
@@ -282,13 +297,17 @@ def main():
 				board.reset()
 			if event.type == KEYDOWN and event.key == K_d:
 				map(lambda s: s.dump(), stones)
+			if event.type == KEYDOWN and event.key == K_SPACE:
+				paused = not paused
 			if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
 				return
+		frame_time = clock.tick(30) / 1000.0
+		if paused:
+			continue
 		board.update()
 		screen.fill(BG)
 		stones.draw(screen)
 		pygame.display.flip()
-		clock.tick(30)
 		mouse_click = None
 
 
