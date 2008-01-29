@@ -97,6 +97,8 @@ class Board(object):
 						self.stones[n] = None
 						self.stones[stone.cell] = stone
 						empty_cells.append(n)
+					else:
+						empty_cells = []
 			for n in empty_cells:
 				self.stones[n] = Stone(self, random.randint(0, 6), n)
 		# stones must be updated in particular order
