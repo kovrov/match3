@@ -1,9 +1,10 @@
 import QtQuick 2.4
 import QtQuick.Window 2.2
+import "style.js" as Style
 
 Window {
     visible: true
-    width: 64 * 8; height: 64 * 8
+    width: Style.window.width; height: Style.window.height
     color: "#333"
 
     function getIndex(col, row) {
@@ -85,7 +86,7 @@ Window {
                     readonly property int column: model.index % 8
                     property Item stone
 
-                    width: 64; height: 64
+                    width: Style.tile.width; height: Style.tile.height
                     enabled: stone && !stone.moving
 
                     Component.onCompleted: { grid.squares[model.index] = this; }
@@ -120,14 +121,11 @@ Window {
     Component {
         id: stoneComponent
 
-        Rectangle {
-            id: stone
-
+        Item {
+            // stone
             property int type
             readonly property bool moving: ax.running || ay.running
-
-            width: 64; height: 64
-            color: Qt.hsla(type / 7, 0.5, 0.5)
+            width: Style.tile.width; height: Style.tile.height
 
             onMovingChanged: {
                 if (!moving) {
@@ -145,11 +143,19 @@ Window {
 
             Behavior on x { NumberAnimation { id: ax } }
             Behavior on y { NumberAnimation { id: ay } }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 48; height: 48; radius: 24
+                color: Qt.hsla(type / 7,
+                               type === 3 ? 0 : 0.5,
+                               type === 3 ? 0.6 : 0.5)
+            }
         }
     }
 
     Component.onCompleted: {
-        for (var i=0; i < 8; ++i) {
+        for (var i = 0; i < 8; ++i) {
             updateColumn(i);
         }
     }
