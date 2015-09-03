@@ -43,12 +43,26 @@ Window {
             rows: 8; columns: 8
             Repeater {
                 model: 8 * 8
-                Item {
+                MouseArea {
                     // square
                     readonly property int row: Math.floor(model.index / 8)
                     readonly property int column: model.index % 8
                     property Item stone
                     width: 64; height: 64
+                    onExited: {
+                        var other;
+                        if (mouseX < 0) {
+                            other = grid.children[getIndex(column - 1, row)];
+                        } else if (mouseX > width) {
+                            other = grid.children[getIndex(column + 1, row)];
+                        } else if (mouseY < 0) {
+                            other = grid.children[getIndex(column, row - 1)];
+                        } else if (mouseY > height) {
+                            other = grid.children[getIndex(column, row + 1)];
+                        }
+                        if (other && other.stone)
+                            swapSquares(stone, other.stone);
+                    }
                 }
             }
         }
@@ -71,24 +85,6 @@ Window {
 
             Behavior on x { NumberAnimation { id: ax } }
             Behavior on y { NumberAnimation { id: ay } }
-
-            MouseArea {
-                anchors.fill: parent
-                onExited: {
-                    var other;
-                    if (mouseX < 0) {
-                        other = grid.children[getIndex(stone.square.column - 1, stone.square.row)];
-                    } else if (mouseX > width) {
-                        other = grid.children[getIndex(stone.square.column + 1, stone.square.row)];
-                    } else if (mouseY < 0) {
-                        other = grid.children[getIndex(stone.square.column, stone.square.row - 1)];
-                    } else if (mouseY > height) {
-                        other = grid.children[getIndex(stone.square.column, stone.square.row + 1)];
-                    }
-                    if (other && other.stone)
-                        swapSquares(stone, other.stone);
-                }
-            }
         }
     }
 
