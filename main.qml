@@ -28,7 +28,10 @@ Window {
             if (!square.stone) {
                 var above = grid.squares[getIndex(col, row - 1)];
                 var stone = above && above.stone ||
-                        stoneComponent.createObject(board, {x: square.x, y: -64});
+                        stoneComponent.createObject(board, {
+                                                        x: square.x, y: -64,
+                                                        type: Math.floor(Math.random() * 7)
+                                                    });
                 square.stone = stone; // this will trigger animation
                 if (above)
                     above.stone = null;
@@ -83,10 +86,13 @@ Window {
 
     Component {
         id: stoneComponent
+
         Rectangle {
             id: stone
+
+            property int type
             width: 64; height: 64
-            color: Qt.hsla(Math.floor(Math.random() * 7) / 7, 0.5, 0.5)
+            color: Qt.hsla(type / 7, 0.5, 0.5)
 
             Behavior on x { NumberAnimation { id: ax } }
             Behavior on y { NumberAnimation { id: ay } }
