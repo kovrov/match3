@@ -10,16 +10,16 @@ Window {
         return col >= 0 && col < 8 && row >= 0 && row < 8 ? col + row * 8 : -1;
     }
 
-    function removeSquare(stone) {
-        stone.square.stone = null;
-        stone.destroy();
-        updateColumn(stone.square.column);
+    function removeSquare(square) {
+        square.stone.destroy();
+        square.stone = null;
+        updateColumn(square.column);
     }
 
-    function swapSquares(stone_a, stone_b) {
-        var square_a = stone_a.square, square_b = stone_b.square
-        stone_a.square = square_b;
-        stone_b.square = square_a;
+    function swapSquares(square_a, square_b) {
+        var stone_a = square_a.stone, stone_b = square_b.stone;
+        square_a.stone = stone_b;
+        square_b.stone = stone_a;
     }
 
     function updateColumn(col) {
@@ -29,7 +29,7 @@ Window {
                 var above = grid.children[getIndex(col, row - 1)];
                 var stone = above && above.stone ||
                         stoneComponent.createObject(board, {x: square.x, y: -64});
-                stone.square = square;
+                square.stone = stone; // this will trigger animation
                 if (above)
                     above.stone = null;
             }
@@ -49,6 +49,14 @@ Window {
                     readonly property int column: model.index % 8
                     property Item stone
                     width: 64; height: 64
+                    enabled: stone && !stone.moving
+
+                    onStoneChanged: {
+                        if (stone) {
+                            stone.x = x;
+                            stone.y = y;
+                        }
+                    }
                     onExited: {
                         var other;
                         if (mouseX < 0) {
@@ -61,7 +69,7 @@ Window {
                             other = grid.children[getIndex(column, row + 1)];
                         }
                         if (other && other.stone)
-                            swapSquares(stone, other.stone);
+                            swapSquares(this, other);
                     }
                 }
             }
@@ -72,16 +80,8 @@ Window {
         id: stoneComponent
         Rectangle {
             id: stone
-            property Item square
             width: 64; height: 64
             color: Qt.hsla(Math.floor(Math.random() * 7) / 7, 0.5, 0.5)
-            enabled: !(ax.running || ay.running)
-
-            onSquareChanged: {
-                square.stone = stone;
-                x = square.x;
-                y = square.y;
-            }
 
             Behavior on x { NumberAnimation { id: ax } }
             Behavior on y { NumberAnimation { id: ay } }
