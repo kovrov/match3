@@ -24,9 +24,9 @@ Window {
 
     function updateColumn(col) {
         for (var row = 7 ; row >= 0; --row) {
-            var square = grid.children[getIndex(col, row)];
+            var square = grid.squares[getIndex(col, row)];
             if (!square.stone) {
-                var above = grid.children[getIndex(col, row - 1)];
+                var above = grid.squares[getIndex(col, row - 1)];
                 var stone = above && above.stone ||
                         stoneComponent.createObject(board, {x: square.x, y: -64});
                 square.stone = stone; // this will trigger animation
@@ -40,6 +40,8 @@ Window {
         id: board
         Grid {
             id: grid
+
+            property var squares: []
             rows: 8; columns: 8
             Repeater {
                 model: 8 * 8
@@ -51,6 +53,8 @@ Window {
                     width: 64; height: 64
                     enabled: stone && !stone.moving
 
+                    Component.onCompleted: { grid.squares[model.index] = this; }
+
                     onStoneChanged: {
                         if (stone) {
                             stone.x = x;
@@ -58,18 +62,19 @@ Window {
                         }
                     }
                     onExited: {
-                        var other;
+                        var other_idx = -1;
                         if (mouseX < 0) {
-                            other = grid.children[getIndex(column - 1, row)];
+                            other_idx = getIndex(column - 1, row);
                         } else if (mouseX > width) {
-                            other = grid.children[getIndex(column + 1, row)];
+                            other_idx = getIndex(column + 1, row);
                         } else if (mouseY < 0) {
-                            other = grid.children[getIndex(column, row - 1)];
+                            other_idx = getIndex(column, row - 1);
                         } else if (mouseY > height) {
-                            other = grid.children[getIndex(column, row + 1)];
+                            other_idx = getIndex(column, row + 1);
                         }
-                        if (other && other.stone)
-                            swapSquares(this, other);
+                        if (other_idx !== -1) {
+                            swapSquares(this, grid.squares[other_idx]);
+                        }
                     }
                 }
             }
