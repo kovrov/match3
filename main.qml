@@ -6,17 +6,17 @@ Window {
     width: 64 * 8; height: 64 * 8
     color: "#333"
 
-    function index(col, row) {
+    function getIndex(col, row) {
         return col >= 0 && col < 8 && row >= 0 && row < 8 ? col + row * 8 : -1;
     }
 
-    function remove(stone) {
+    function removeSquare(stone) {
         stone.square.stone = null;
         stone.destroy();
         updateColumn(stone.square.column);
     }
 
-    function swap(stone_a, stone_b) {
+    function swapSquares(stone_a, stone_b) {
         var square_a = stone_a.square, square_b = stone_b.square
         stone_a.square = square_b;
         stone_b.square = square_a;
@@ -24,9 +24,9 @@ Window {
 
     function updateColumn(col) {
         for (var row = 7 ; row >= 0; --row) {
-            var square = grid.children[index(col, row)];
+            var square = grid.children[getIndex(col, row)];
             if (!square.stone) {
-                var above = grid.children[index(col, row - 1)];
+                var above = grid.children[getIndex(col, row - 1)];
                 var stone = above && above.stone ||
                         stoneComponent.createObject(board, {x: square.x, y: -64});
                 stone.square = square;
@@ -77,16 +77,16 @@ Window {
                 onExited: {
                     var other;
                     if (mouseX < 0) {
-                        other = grid.children[index(stone.square.column - 1, stone.square.row)];
+                        other = grid.children[getIndex(stone.square.column - 1, stone.square.row)];
                     } else if (mouseX > width) {
-                        other = grid.children[index(stone.square.column + 1, stone.square.row)];
+                        other = grid.children[getIndex(stone.square.column + 1, stone.square.row)];
                     } else if (mouseY < 0) {
-                        other = grid.children[index(stone.square.column, stone.square.row - 1)];
+                        other = grid.children[getIndex(stone.square.column, stone.square.row - 1)];
                     } else if (mouseY > height) {
-                        other = grid.children[index(stone.square.column, stone.square.row + 1)];
+                        other = grid.children[getIndex(stone.square.column, stone.square.row + 1)];
                     }
                     if (other && other.stone)
-                        swap(stone, other.stone);
+                        swapSquares(stone, other.stone);
                 }
             }
         }
