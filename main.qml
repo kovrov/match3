@@ -121,12 +121,8 @@ Window {
     Component {
         id: stoneComponent
 
-        Item {
-            // stone
-            property int type
-            readonly property bool moving: ax.running || ay.running
+        Stone {
             width: Style.tile.width; height: Style.tile.height
-
             onMovingChanged: {
                 if (!moving) {
                     var sets = matchingSets(grid.squares);
@@ -139,17 +135,6 @@ Window {
                         }
                     }
                 }
-            }
-
-            Behavior on x { NumberAnimation { id: ax } }
-            Behavior on y { NumberAnimation { id: ay } }
-
-            Rectangle {
-                anchors.centerIn: parent
-                width: 48; height: 48; radius: 24
-                color: Qt.hsla(type / 7,
-                               type === 3 ? 0 : 0.5,
-                               type === 3 ? 0.6 : 0.5)
             }
         }
     }
