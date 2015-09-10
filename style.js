@@ -13,3 +13,7 @@ var window = {
     width: grid.size * tile.width,
     height: grid.size * tile.height
 };
+
+var ani = {
+    removeDelay: 500
+};
