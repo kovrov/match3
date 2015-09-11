@@ -112,7 +112,7 @@ Window {
                     function kill(locked) {
                         if (stone) {
                             stone.locked = locked;
-                            kill_timer.running = true;
+                            killTimer.running = true;
                         }
                     }
 
@@ -157,7 +157,7 @@ Window {
                     }
 
                     Timer {
-                        id: kill_timer
+                        id: killTimer
                         interval: Style.ani.removeDelay
                         onRunningChanged: {
                             if (running) {

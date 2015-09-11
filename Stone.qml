@@ -1,4 +1,5 @@
 import QtQuick 2.4
+import "style.js" as Style
 
 Item {
     id: root
@@ -9,12 +10,23 @@ Item {
     Behavior on x { NumberAnimation { id: ax } }
     Behavior on y { NumberAnimation { id: ay } }
 
-    Rectangle {
+    ShaderEffect {
         anchors.centerIn: parent
-        width: 48; height: 48; radius: 24
-        color: Qt.hsla(type / 7,
-                       type === 3 ? 0 : 0.5,
-                       type === 3 ? 0.6 : 0.5)
+        width: 60; height: 60
+
+        property var mask: Image { source: Style.stones[root.type].mask }
+        property color color: Style.stones[root.type].color
+
+        fragmentShader: "#version 120
+            varying highp vec2 qt_TexCoord0;
+            uniform lowp float qt_Opacity;
+            uniform sampler2D mask;
+            uniform lowp vec4 color;
+            void main() {
+                vec4 mask_tex = texture2D(mask, qt_TexCoord0.st);
+                vec4 color_tex = vec4(color.rgb, mask_tex.a);
+                gl_FragColor =  color_tex * mask_tex.a * qt_Opacity;
+            }"
     }
 
     transform: Translate {
