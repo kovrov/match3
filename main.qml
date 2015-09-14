@@ -4,6 +4,9 @@ import "style.js" as Style
 
 Window {
     visible: true
+
+    signal score(int points);
+
     width: Style.window.width; height: Style.window.height
     color: "#333"
 
@@ -184,15 +187,10 @@ Window {
                         locked.forEach(function(idx, index, locked) {
                             grid.squares[idx].kill(locked);
                         });
+                        score(locked.length);
                         return;
                     }
-                    var sets = matchingSets(grid.squares);
-                    for (var i = 0; i < sets.length; ++i) {
-                        var matches = sets[i];
-                        for (var j = 0; j < matches.length; ++j) {
-                            grid.squares[matches[j]].kill(matches);
-                        }
-                    }
+                    updateTimer.restart();
                 }
             }
         }
@@ -201,6 +199,21 @@ Window {
     Component.onCompleted: {
         for (var i = 0; i < 8; ++i) {
             updateColumn(i);
+        }
+    }
+
+    Timer {
+        id: updateTimer
+        interval: 1000 / 30
+        onTriggered: {
+            var sets = matchingSets(grid.squares);
+            for (var i = 0; i < sets.length; ++i) {
+                var matches = sets[i];
+                for (var j = 0; j < matches.length; ++j) {
+                    grid.squares[matches[j]].kill(matches);
+                }
+                score(matches.length);
+            }
         }
     }
 }

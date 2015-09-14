@@ -17,7 +17,7 @@ Item {
         property var mask: Image { source: Style.stones[root.type].mask }
         property color color: Style.stones[root.type].color
 
-        fragmentShader: "#version 120
+        fragmentShader: "
             varying highp vec2 qt_TexCoord0;
             uniform lowp float qt_Opacity;
             uniform sampler2D mask;
