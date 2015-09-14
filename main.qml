@@ -5,7 +5,9 @@ import "style.js" as Style
 Window {
     visible: true
 
-    signal score(int points);
+
+    signal score(int points)
+    signal message(string text)
 
     width: Style.window.width; height: Style.window.height
     color: "#333"
@@ -54,6 +56,7 @@ Window {
         if (set_a.length || set_b.length) {
             square_a.stone = stone_b;
             square_b.stone = stone_a;
+            set_a.combo = set_b.combo = Math.max(0, set_a.length - 2) + Math.max(0, set_b.length - 2);
             for (var i = 0; i < set_a.length; ++i) {
                 grid.squares[set_a[i]].stone.locked = set_a;
             }
@@ -187,7 +190,9 @@ Window {
                         locked.forEach(function(idx, index, locked) {
                             grid.squares[idx].kill(locked);
                         });
-                        score(locked.length);
+                        if (locked.combo !== 1)
+                            message("X" + locked.combo + "!")
+                        score(locked.length * locked.combo);
                         return;
                     }
                     updateTimer.restart();
@@ -207,12 +212,14 @@ Window {
         interval: 1000 / 30
         onTriggered: {
             var sets = matchingSets(grid.squares);
+            if (sets.length > 1)
+                message("x" + sets.length + "!");
             for (var i = 0; i < sets.length; ++i) {
                 var matches = sets[i];
                 for (var j = 0; j < matches.length; ++j) {
                     grid.squares[matches[j]].kill(matches);
                 }
-                score(matches.length);
+                score(matches.length * sets.length);
             }
         }
     }
